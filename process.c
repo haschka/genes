@@ -12,7 +12,7 @@ gene read_gene_from_file(FILE* f, int n_chrome) {
   char* line = NULL;
   size_t n = 0;
 
-  char** chromosomes = (char*)malloc(sizeof(char*)*n_chrome);
+  char** chromosomes = (char**)malloc(sizeof(char*)*n_chrome);
 
   size_t* chromosome_size = (size_t*)malloc(sizeof(size_t)*n_chrome);
 
