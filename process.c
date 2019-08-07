@@ -45,10 +45,10 @@ gene read_gene_from_file(FILE* f, int n_chrome) {
       chromosome_size[current_chromosome] += n;
     }	
   }
-  gene.chromosomes = chromosomes;
-  gene.chromosome_size = chromosome_size;
-  gene.n_chromosomes = n_chrome;
-  return(gene);
+  retval.chromosomes = chromosomes;
+  retval.chromosome_size = chromosome_size;
+  retval.n_chromosomes = n_chrome;
+  return(retval);
 }
     
 
