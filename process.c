@@ -48,6 +48,7 @@ gene read_gene_from_file(FILE* f, int n_chrome) {
   gene.chromosomes = chromosomes;
   gene.chromosome_size = chromosome_size;
   gene.n_chromosomes = n_chrome;
+  return(gene);
 }
     
 
