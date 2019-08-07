@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
 
 typedef struct {
   char** chromosomes;
@@ -25,7 +26,7 @@ gene read_gene_from_file(FILE* f, int n_chrome) {
   rewind(f);
   
   while(-1 != getline(&line, &n, f)) {
-
+    
     if(line[0] == '>') {
       current_chromosome++;
       alloc_size = 10000;
@@ -34,7 +35,12 @@ gene read_gene_from_file(FILE* f, int n_chrome) {
 	(char*)malloc(sizeof(char*)*alloc_size);
 
     } else {
-      if (alloc_size < chromosome_size + n) {
+      // length of the string;
+      n = strlen(line);
+      // remove newline character
+      n = n - 1;
+      
+      if (alloc_size < chromosome_size[current_chromosome] + n) {
 	alloc_size += 10000;
 	chromosomes[current_chromosome] =
 	  (char*)realloc(chromosomes[current_chromosome],
@@ -43,7 +49,8 @@ gene read_gene_from_file(FILE* f, int n_chrome) {
       memcpy(chromosomes[current_chromosome]
 	     +chromosome_size[current_chromosome], line, n);
       chromosome_size[current_chromosome] += n;
-    }	
+    }
+    n = 0;
   }
   retval.chromosomes = chromosomes;
   retval.chromosome_size = chromosome_size;
@@ -55,14 +62,14 @@ gene read_gene_from_file(FILE* f, int n_chrome) {
 int main(int argc, char** argv) {
 
   // load data into ram:
-
-  char** chromosomes = (char*)malloc(sizeof(char*)*n_chrome);
+  int n_chrome;
+  char** chromosomes;
 
   FILE* genome_file = fopen(argv[1], "r");
 
-  int n_chrome;
-
-  sscanf(argv[2],"%d",n_chrome);
+  sscanf(argv[2],"%d",&n_chrome);
 
   read_gene_from_file(genome_file, n_chrome);
+
+  return(0);
 }
