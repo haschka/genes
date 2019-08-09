@@ -63,6 +63,7 @@ gene read_gene_from_file(FILE* f, int n_chrome) {
   retval.chromosome_size = chromosome_size;
   retval.chromosome_name = chromosome_name;
   retval.n_chromosomes = n_chrome;
+  if (line != NULL) free(line);
   return(retval);
 }
 
@@ -93,6 +94,77 @@ void extract_sequence_to_file(gene gen, size_t chromosome_index,
   }
 }
 
+int process_protein_exon_list(gene* gen, FILE* exon_list, FILE* output_file) {
+
+  int i;
+  
+  char chromosome_name_buffer[80];
+
+  size_t chromosome_index;
+  
+  char* line = NULL;
+  size_t n = 0;
+
+  char buffer[80];
+
+  size_t start_position, start_index;
+  size_t end_position, end_index;
+  
+  size_t length;
+  int phase;
+
+  char* chromosome;
+  char* initial_position;
+  
+  rewind(exon_list);
+  if (-1 != getline(&line, &n, exon_list)) {
+    sscanf(line,"%s",chromosome_name_buffer);
+    chromosome_index =
+      (size_t)get_chromosome_index_by_name(gen[0], chromosome_name_buffer);
+    chromosome = gen->chromosomes[chromosome_index];
+  } else {
+    fprintf(stderr, "Warning protein name not in file\n");
+    return -1; // no protein name in file	
+  }
+  
+  while(-1 != getline(&line, &n, exon_list)) {
+
+    if( 5 == sscanf(line,"%s %lu %lu %lu %d",
+		    buffer, &start_position, &end_position, &length, &phase)) {
+
+      if(!strcmp(buffer,"Exon")) {
+
+	start_index = start_position - 1;
+	end_index = end_position - 1;
+
+	if ( (length-1) == (end_index-start_index) ) {
+
+	  initial_position = chromosome+start_index;
+
+	  for (i = 0; i < length; i++) {
+	    putc(initial_position[i], output_file);
+	  }
+
+	  fprintf(output_file,"\n");
+
+	} else {
+	  fprintf(stderr,"Waring lengths are not correct\n");
+	  return -3; // length are not correct	  
+	}
+	
+      } else {
+	fprintf(stderr,"Warining line does not start with exon\n");
+	return -2; // lines do not start with exon
+      }
+    } else {
+      fprintf(stderr,"Warning format is not correct\n");
+      return -4; // format not correct
+    }
+    
+  }
+  if (line != NULL) free(line);
+  return 0; // file has been processed correctly
+}   
 
 void apply_SNPs_from_vcf_on_gene(gene* gen, FILE* vcf_snp, double min_score) {
 
@@ -136,7 +208,9 @@ void apply_SNPs_from_vcf_on_gene(gene* gen, FILE* vcf_snp, double min_score) {
       }
     }
   }
-  printf("Applied SNP vcf, modified %lu bases!\n", bases_modified);	 
+  
+  if(line != NULL)free(line);
+  printf("Applied SNP vcf, modified %lu bases!\n", bases_modified);
 }	     
 
 int main(int argc, char** argv) {
@@ -146,10 +220,18 @@ int main(int argc, char** argv) {
   char** chromosomes;
 
   FILE* genome_file = fopen(argv[1], "r");
+  FILE* snp_vcf = fopen(argv[2], "r");
+  FILE* exon_list = fopen(argv[3], "r");
+  FILE* exon_out = fopen(argv[4], "w");
 
-  sscanf(argv[2],"%d",&n_chrome);
+  gene gen;
+  
+  sscanf(argv[5],"%d",&n_chrome);
 
-  read_gene_from_file(genome_file, n_chrome);
-
+  gen = read_gene_from_file(genome_file, n_chrome);
+  fclose(genome_file);
+  apply_SNPs_from_vcf_on_gene(&gen, snp_vcf, 0.);
+  process_protein_exon_list(&gen, exon_list, exon_out);
+  
   return(0);
-}
+} 
